@@ -2,14 +2,26 @@
 # app.py — AI Impact on Students: Prediction Dashboard
 # ============================================================
 
+
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
-import json
 import matplotlib.pyplot as plt
 import seaborn as sns
-import shap
+import json
+import os
+
+# Handle imports that might fail on Streamlit Cloud
+try:
+    import joblib
+except ImportError:
+    from sklearn.utils import joblib
+
+try:
+    import shap
+    SHAP_AVAILABLE = True
+except ImportError:
+    SHAP_AVAILABLE = False
 
 # ============================================================
 # PAGE CONFIG
@@ -337,26 +349,25 @@ if predict_btn:
     st.markdown("## Why This Prediction? (SHAP Explanation)")
 
     try:
-        explainer = shap.TreeExplainer(clf_model)
-        shap_values = explainer(input_df)
-
-        # Waterfall plot
-        fig, ax = plt.subplots(figsize=(12, 8))
-        shap.waterfall_plot(shap_values[0], max_display=12, show=False)
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
-
-        st.markdown("""
-        <div class="insight-box">
-            <strong>How to read this:</strong> Features in <span style="color:#e76f51;">red</span>
-            push the prediction higher. Features in <span style="color:#2a9d8f;">blue</span>
-            push it lower. The base value is the average prediction across all students.
-        </div>
-        """, unsafe_allow_html=True)
-
+        if not SHAP_AVAILABLE:
+            st.info("SHAP explanation not available in this deployment.")
+        else:
+            explainer = shap.TreeExplainer(clf_model)
+            shap_values = explainer(input_df)
+            fig, ax = plt.subplots(figsize=(12, 8))
+            shap.waterfall_plot(shap_values[0], max_display=12, show=False)
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+            st.markdown("""
+            <div class="insight-box">
+                <strong>How to read this:</strong> Features in <span style="color:#e76f51;">red</span>
+                push the prediction higher. Features in <span style="color:#2a9d8f;">blue</span>
+                push it lower.
+            </div>
+            """, unsafe_allow_html=True)
     except Exception as e:
-        st.warning(f"SHAP explanation not available: {e}")
+        st.info(f"SHAP explanation not available: {e}")
 
     # ============================================================
     # INPUT SUMMARY
