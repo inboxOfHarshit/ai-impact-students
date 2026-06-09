@@ -1,4 +1,3 @@
-@"
 streamlit
 pandas
 numpy<2.2
@@ -8,4 +7,3 @@ shap
 matplotlib
 seaborn
 joblib
-"@ | Out-File -Encoding utf8 requirements.txt
