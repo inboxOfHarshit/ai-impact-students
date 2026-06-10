@@ -1,0 +1,7 @@
+﻿__pycache__
+*.pyc
+.ipynb_checkpoints
+.idea
+.git
+*.ipynb
+ai_impact_on_students.csv
