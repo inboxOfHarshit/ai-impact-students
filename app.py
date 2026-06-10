@@ -1,27 +1,20 @@
-# ============================================================
+# # ============================================================
 # app.py — AI Impact on Students: Prediction Dashboard
 # ============================================================
-
 
 import streamlit as st
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import json
 import os
+import joblib
 
-# Handle imports that might fail on Streamlit Cloud
-try:
-    import joblib
-except ImportError:
-    from sklearn.utils import joblib
+SHAP_AVAILABLE = False
 
-try:
-    import shap
-    SHAP_AVAILABLE = True
-except ImportError:
-    SHAP_AVAILABLE = False
 
 # ============================================================
 # PAGE CONFIG
@@ -284,90 +277,22 @@ if predict_btn:
     reg_pred = reg_model.predict(input_df)[0]
 
     # Display results
-    st.markdown("## Prediction Results")
-
-    res_col1, res_col2 = st.columns(2)
-
-    with res_col1:
-        st.markdown("### GPA Direction (Classification)")
-
-        color_map = {'Improved': '#2a9d8f', 'Stable': '#e9c46a', 'Declined': '#e76f51'}
-        emoji_map = {'Improved': '📈', 'Stable': '➡️', 'Declined': '📉'}
-
-        st.markdown(f"""
-        <div style="background: {color_map.get(cls_label, '#ccc')}22;
-                    border: 2px solid {color_map.get(cls_label, '#ccc')};
-                    border-radius: 12px; padding: 1.5rem; text-align: center;">
-            <h2 style="margin:0; color: {color_map.get(cls_label, '#ccc')};">
-                {emoji_map.get(cls_label, '')} {cls_label}
-            </h2>
-            <p style="margin:0.5rem 0 0 0; font-size: 0.9rem;">
-                Predicted GPA direction based on AI usage profile
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Probability bars
-        st.markdown("**Class Probabilities:**")
-        for label, prob in zip(label_encoder.classes_, cls_proba):
-            st.progress(prob, text=f"{label}: {prob:.1%}")
-
-    with res_col2:
-        st.markdown("### Exact GPA Change (Regression)")
-
-        arrow = "↑" if reg_pred > 0 else ("↓" if reg_pred < 0 else "→")
-        color = "#2a9d8f" if reg_pred > 0 else ("#e76f51" if reg_pred < 0 else "#e9c46a")
-
-        st.markdown(f"""
-        <div style="background: {color}22;
-                    border: 2px solid {color};
-                    border-radius: 12px; padding: 1.5rem; text-align: center;">
-            <h2 style="margin:0; color: {color};">
-                {arrow} {reg_pred:+.3f} GPA Points
-            </h2>
-            <p style="margin:0.5rem 0 0 0; font-size: 0.9rem;">
-                Predicted change from {pre_gpa:.2f} → {pre_gpa + reg_pred:.2f}
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Gauge-style display
-        fig, ax = plt.subplots(figsize=(6, 1.5))
-        ax.barh(['GPA Change'], [reg_pred], color=color, height=0.4)
-        ax.axvline(0, color='black', linewidth=0.8)
-        ax.set_xlim(-1.5, 1.5)
-        ax.set_xlabel("GPA Change")
-        for spine in ax.spines.values():
-            spine.set_visible(False)
-        st.pyplot(fig)
-        plt.close()
-
     # ============================================================
-    # SHAP EXPLANATION FOR THIS PREDICTION
+    # PREDICTION INSIGHT (No SHAP — lightweight version)
     # ============================================================
     st.markdown("---")
-    st.markdown("## Why This Prediction? (SHAP Explanation)")
+    st.markdown("## Prediction Breakdown")
 
-    try:
-        if not SHAP_AVAILABLE:
-            st.info("SHAP explanation not available in this deployment.")
-        else:
-            explainer = shap.TreeExplainer(clf_model)
-            shap_values = explainer(input_df)
-            fig, ax = plt.subplots(figsize=(12, 8))
-            shap.waterfall_plot(shap_values[0], max_display=12, show=False)
-            plt.tight_layout()
-            st.pyplot(fig)
-            plt.close()
-            st.markdown("""
-            <div class="insight-box">
-                <strong>How to read this:</strong> Features in <span style="color:#e76f51;">red</span>
-                push the prediction higher. Features in <span style="color:#2a9d8f;">blue</span>
-                push it lower.
-            </div>
-            """, unsafe_allow_html=True)
-    except Exception as e:
-        st.info(f"SHAP explanation not available: {e}")
+    st.markdown("""
+    <div class="insight-box">
+        <strong>Key factors influencing this prediction:</strong><br>
+        Based on your inputs, the model considered your AI usage hours,
+        study habits, dependency level, and academic history to generate
+        this prediction. Adjust the sidebar inputs to see how different
+        profiles change the outcome.
+    </div>
+    """, unsafe_allow_html=True)
+
 
     # ============================================================
     # INPUT SUMMARY
