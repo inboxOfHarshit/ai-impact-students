@@ -5,6 +5,5 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: streamlit run app.py --server.port \ --server.headless true
     envVars:
-      - key: PORT
-        value: 10000
-    plan: free
+      - key: PYTHON_VERSION
+        value: 3.11.9
